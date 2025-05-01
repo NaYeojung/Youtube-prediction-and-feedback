@@ -1,0 +1,92 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "72ce9cee-26d9-4158-b658-bdcc56b2e449",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import sys\n",
+    "import requests\n",
+    "import cv2\n",
+    "import numpy as np\n",
+    "from utils.image_analysis import analyze_image  # 이미지 분석 모듈 임포트\n",
+    "from utils.text_analysis import extract_korean_title_features  # 텍스트 분석 모듈 임포트\n",
+    "import easyocr\n",
+    "from PIL import Image\n",
+    "from io import BytesIO\n",
+    "\n",
+    "# 텍스트 분석 (제목에 대한 특성 추출)\n",
+    "def extract_text_features(video_title):\n",
+    "    text_features = extract_korean_title_features(video_title, video_title)  # title을 video_id로 사용\n",
+    "    return text_features\n",
+    "\n",
+    "# 썸네일 이미지 분석 후 특성 추출\n",
+    "def extract_image_features(thumbnail_url):\n",
+    "    # 썸네일 URL을 통해 이미지를 다운로드\n",
+    "    try:\n",
+    "        response = requests.get(thumbnail_url)\n",
+    "        image = Image.open(BytesIO(response.content))\n",
+    "        image = np.array(image)\n",
+    "        \n",
+    "        # 썸네일 분석\n",
+    "        image_features = analyze_image(image)\n",
+    "        return image_features\n",
+    "    except Exception as e:\n",
+    "        print(f\"Error downloading or processing the image: {e}\")\n",
+    "        return None\n",
+    "\n",
+    "# 특성 추출 함수 (텍스트와 이미지 특성 결합)\n",
+    "def extract_features(video_title, thumbnail_url):\n",
+    "    # 텍스트 특성 추출\n",
+    "    text_features = extract_text_features(video_title)\n",
+    "\n",
+    "    # 이미지 특성 추출\n",
+    "    image_features = extract_image_features(thumbnail_url)\n",
+    "\n",
+    "    # 특성 결합\n",
+    "    features = {\n",
+    "        \"video_title\": video_title,\n",
+    "        \"text_features\": text_features,\n",
+    "        \"image_features\": image_features\n",
+    "    }\n",
+    "    \n",
+    "    return features\n",
+    "\n",
+    "if __name__ == '__main__':\n",
+    "    # 사용자로부터 제목과 썸네일 URL 입력받기\n",
+    "    video_title = sys.argv[1]  # 첫 번째 인자: 제목\n",
+    "    thumbnail_url = sys.argv[2]  # 두 번째 인자: 썸네일 URL\n",
+    "\n",
+    "    # 특성 추출\n",
+    "    features = extract_features(video_title, thumbnail_url)\n",
+    "    \n",
+    "    # 특성 결과 출력\n",
+    "    print(\"Extracted Features:\")\n",
+    "    print(features)\n"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.11.7"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

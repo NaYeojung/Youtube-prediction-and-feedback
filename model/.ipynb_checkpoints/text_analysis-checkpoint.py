@@ -1,0 +1,92 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "06cc160d-c487-4f66-bc92-8d42996a65fe",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from konlpy.tag import Okt\n",
+    "import emoji\n",
+    "from collections import Counter\n",
+    "import re\n",
+    "\n",
+    "# 형태소 분석기 초기화\n",
+    "okt = Okt()\n",
+    "\n",
+    "# 불용어 리스트\n",
+    "stopwords = set([\n",
+    "    '은', '는', '이', '가', '을', '를', '에', '의', '도', '로', '과', '와', '한', '하다',\n",
+    "    '에서', '에게', '까지', '부터', '보다', '처럼', '만', '없이', '수', '것', '좀', '더', '이',\n",
+    "    '또', '등', '그', '이것', '저것', '그것', '거', '때', '건', '중', '나', '너', '저', '우리',\n",
+    "    '누구', '뭐', '왜', '어디', '어떻게', '영상', '채널', '오늘', '이제', '정말', '진짜',\n",
+    "    '완전', '그냥', '내가', '당신', '내용', '제목', '시작', '끝', '다시', '모두',\n",
+    "    '최고', '대박', '소름', '헐', 'ㅋㅋ', 'ㅎㅎ', 'ㅠㅠ', '와우', '자막','브이','로그','일상',\n",
+    "    '정보', '필독', '업로드', '자막', '구독', '좋아요', '댓글', '시청', '확인',\n",
+    "    '보세요'\n",
+    "])\n",
+    "\n",
+    "# 클릭 유도 키워드\n",
+    "clickbait_keywords = [\n",
+    "    '실화', '충격', '대박', '소름', '반전', '최초', '드디어', '헐', '진실',\n",
+    "    '믿기지', '이게', '무조건', '죽기 전에', '꼭 봐야할'\n",
+    "]\n",
+    "\n",
+    "# 피처 추출 함수\n",
+    "def extract_korean_title_features(title, video_id):\n",
+    "    features = {}\n",
+    "    features['video_id'] = video_id\n",
+    "    features['title'] = title\n",
+    "    features['title_length'] = len(title)\n",
+    "    features['word_count'] = len(okt.morphs(title))\n",
+    "\n",
+    "    # 이모지 관련 피처\n",
+    "    features['emoji_count'] = sum(1 for char in title if char in emoji.EMOJI_DATA)\n",
+    "    features['has_emoji'] = int(features['emoji_count'] > 0)\n",
+    "\n",
+    "    # 특수문자 수\n",
+    "    special_chars = re.findall(r\"[!\\\"#$%&'()*+,\\-./:;<=>?@\\[\\]^_`{|}~]\", title)\n",
+    "    features['special_char_count'] = len(special_chars)\n",
+    "\n",
+    "    # 클릭 유도 키워드 포함 여부\n",
+    "    features['is_clickbait'] = int(any(word in title for word in clickbait_keywords))\n",
+    "\n",
+    "    # 구두점 포함 여부\n",
+    "    features['has_question_mark'] = '?' in title\n",
+    "    features['has_exclamation'] = '!' in title\n",
+    "\n",
+    "    # 주요 명사 3개 추출 (불용어 제거 포함)\n",
+    "    nouns = okt.nouns(title)\n",
+    "    filtered_nouns = [noun for noun in nouns if noun not in stopwords and len(noun) > 1]\n",
+    "    noun_freq = Counter(filtered_nouns)\n",
+    "    top_nouns = [word for word, _ in noun_freq.most_common(3)]\n",
+    "    for i in range(3):\n",
+    "        features[f'top_noun_{i+1}'] = top_nouns[i] if i < len(top_nouns) else ''\n",
+    "\n",
+    "    return features\n"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.11.7"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
